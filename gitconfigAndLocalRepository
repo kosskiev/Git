@@ -41,8 +41,8 @@ git commit -m "My first commit"
 # если сейчас проверить статус он будет Copy in Local Repository - Скопировать в локальный репозиторий
 git status
 
-# отправляем на git
-git push
+# отправляем на git попросит ввести Username и пароль
+git push origin 
 
 # если сейчас проверить статус он будет Copy in Remotr Repository - Скопировать в удаленный репозиторий
 git status
@@ -72,4 +72,5 @@ git fiff --staged
 touch .gitignore создать файл
 nano .gitignore добавить нужные файлы или директории
 после сохранения и добавления в репозиторий все перечисленные файлы будут игнорироватся
-git push origin
+
+
