@@ -1,2 +1,22 @@
+
+
 # создание ветки
 git checkout -b patrakov
+
+# создаем изменения в этой ветке, сохраняем и добавляем в локальный репозиторий, чтобы отправить на удаленный репозиторий
+git push origin
+# он выдаст нам ошибку что такого репозитория нету и предложит его создать и вместе с ним сделать push
+git push --set-upstream origin patrakov_task001
+
+# проверить на какой ветке
+git branch
+
+# перейти на ветку master
+git checkout master(main/origin)
+
+# удалить локальную копию ветки patrakov (нужно находится на другой ветке)
+git branch -d patrakov
+
+# удалить удаленную версию ветки patrakov c git
+git push origin --delete patrakov
+
