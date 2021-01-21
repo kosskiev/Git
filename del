@@ -1,0 +1,6 @@
+# удалить файлы 
+rm file1.txt
+
+# удалить директории
+rm -r somedirectory/
+
