@@ -1,0 +1,77 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI-CD-to-AWS-ElastickBeastalk
+env: 
+  S3_BACKET_NAME     : "gatsby-bucket"
+  APPLICATION_NAME   : "Applicationgatsby"
+  ENVIREMENT_NAME    : "gatsby-env"
+  DEPLOY_PACKAGE_NAME: "gatsby_app_${{ github.sha }}.zip"
+  AWS_REGION_NAME    : "eu-north-1"
+
+# запуск действия
+on:
+  # Запустить PUSH и PULL запрос для главнй ветки (при изменении главной ветки будет запускатся)
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Не понятно нужно вернутся
+  workflow_dispatch:
+
+# Выполнение процессов, могут выполнятся последовательно или паралельно
+jobs:
+  # Название нашего Jobs
+  ci_part:
+    # собираемся запустить Ubuntu (можно выбрать любой другой)
+    runs-on: ubuntu-latest
+
+    # Последовательность задач которые будут выполнятся
+    steps:
+      # Клонируем репозиторий
+      - name: git clone repository  
+        uses: actions/checkout@v2
+      # создаю архив не включая туда файлы *.git*
+      - name: Create Zip deployment package
+        run : zip -r ${{ env.DEPLOY_PACKAGE_NAME }} ./ -x *.git* 
+      # делаю аутинтификацию с AWS   
+      - name: Configure my AWS Cridentials # запускаю скрипт который конфигурирует AWS Credentials 
+        uses: aws-actions/configure-aws-credentials@v1
+        with: # теперь нужно ввести ACCESS KEY и SECRET KEY (создавали на вкладке Settings (Secrets)в репозитории , сами ключи генерируются на AWS IAM с правами доступа) 
+          aws-access-key-id     : ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key : ${{ secrets.AWS_SECRET_KEY }} 
+          aws-region            : ${{ env.AWS_REGION_NAME }}  
+        # теперь отправляем наш файл на S3 Bucket  
+      - name: Copy Deployment package to S3 Bucket 
+        run : aws s3 cp ${{ env.DEPLOY_PACKAGE_NAME }} s3://${{ env.S3_BACKET_NAME }}/
+     
+      - name: CI Finish
+        run : echo "CI Finish"
+
+  cd_part: # диплоим нашу проект
+    runs-on: ubuntu-latest  # запускаю на Ubuntu
+    needs: [ci_part] #запустится только после прохода ci_part(первой части)
+    
+    steps:
+      # делаю аутинтификацию с AWS   
+    - name: Configure my AWS Cridentials # запускаю скрипт который конфигурирует AWS Credentials 
+      uses: aws-actions/configure-aws-credentials@v1
+      with: # теперь нужно ввести ACCESS KEY и SECRET KEY (создавали на вкладке Settings (Secrets)в репозитории , сами ключи генерируются на AWS IAM с правами доступа) 
+        aws-access-key-id     : ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key : ${{ secrets.AWS_SECRET_KEY }} 
+        aws-region            : ${{ env.AWS_REGION_NAME }}  
+        
+    - name: Create new Elastic Beanstalk Application Version # обязательных 3 параметра: название, название директории и наш файл, версия
+      run : | # создает new elastick Application на AWS, название директории и наш zip файл, название версии packege должна быть уникальна по этому привязывамся к SHA - он точно уникальный, описание   
+        aws elasticbeanstalk create-application-version \
+        -- application-name ${{ env.APPLICATION_NAME }} \ 
+        -- source S3Bucket="${{ env.S3_BACKET_NAME }}",S3key="${{ env.DEPLOY_PACKAGE_NAME }}" \
+        -- version-label "Ver-${{ github.sha }}" \
+        -- description "CommitSHA-${{ github.sha }}: 
+     
+    - name: Deploy new Elastic Beanstalk Application Version # закидывает нашу апликацию (2 параметра: название и верия)
+      run : aws elasticbeanstalk update-enviroment --envirement-name ${{ env.ENVIREMENT_NAME }} --version-label "Ver-${{ github.sha }}"
+        
+    - name: CD Finish
+      run : echo "CD Finish"
+        
