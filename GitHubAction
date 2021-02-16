@@ -1,0 +1,3 @@
+# включить отображение статуса прохода тестов на github action
+Status of last test:<br>
+<img src="https://github.com/kosskiev/Reactapp/workflows/CI-CD-to-AWS/badge.svg?branch=master">
